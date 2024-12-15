@@ -51,7 +51,7 @@
 
             // カメラを作成
             const camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
-            camera.position.set(0, 0, 4000);
+            camera.position.set(0, 0, 2000);
 
             // リサイズ対応
             window.addEventListener('resize', () => {
@@ -74,7 +74,7 @@
                 (glb) => {
                     const model = glb.scene;
                     model.scale.set(80.0, 80.0, 80.0);
-                    model.position.set(0, -200, 0);
+                    model.position.set(0, -900, 0);
                     scene.add(model);
                 },
                 undefined,
