@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js 3D Model</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #myCanvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="myCanvas"></canvas>
+    <script src="https://unpkg.com/three@0.147.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script>
+        //https://coosy.co.jp/blog/3dmodel-threejs/ を参考
+        window.addEventListener("DOMContentLoaded", init);
+        function init() {
+            // レンダラーを作成
+            const canvasElement = document.querySelector('#myCanvas');
+            const renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                canvas: canvasElement,
+            });
+
+            // ウィンドウサイズに合わせる
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(width, height);
+
+            // シーンを作成
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87B8C0);
+
+            // 環境光源を作成
+            const ambientLight = new THREE.AmbientLight(0xffffff, 2);
+            scene.add(ambientLight);
+
+            // 平行光源を作成
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+            directionalLight.position.set(0, 3, 6);
+            scene.add(directionalLight);
+
+            // カメラを作成
+            const camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+            camera.position.set(0, 0, 1500);
+
+            // リサイズ対応
+            window.addEventListener('resize', () => {
+                const newWidth = window.innerWidth;
+                const newHeight = window.innerHeight;
+                renderer.setSize(newWidth, newHeight);
+                camera.aspect = newWidth / newHeight;
+                camera.updateProjectionMatrix();
+            });
+
+            // カメラコントローラーを作成
+            const controls = new THREE.OrbitControls(camera, canvasElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.2;
+
+            // 3Dモデルの読み込み
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                'assets/character.glb',
+                (glb) => {
+                    const model = glb.scene;
+                    model.scale.set(80.0, 80.0, 80.0);
+                    model.position.set(0, -200, 0);
+                    scene.add(model);
+                },
+                undefined,
+                (error) => console.error(error)
+            );
+
+            // リアルタイムレンダリング
+            function tick() {
+                controls.update();
+                renderer.render(scene, camera);
+                requestAnimationFrame(tick);
+            }
+            tick();
+        }
+    </script>
+</body>
+</html>
