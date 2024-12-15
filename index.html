@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js 3D Model</title>
+    <title>Three.js Animated Model</title>
     <style>
         body {
             margin: 0;
@@ -20,8 +20,8 @@
     <script src="https://unpkg.com/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://unpkg.com/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
     <script>
-        //https://coosy.co.jp/blog/3dmodel-threejs/ を参考
         window.addEventListener("DOMContentLoaded", init);
+
         function init() {
             // レンダラーを作成
             const canvasElement = document.querySelector('#myCanvas');
@@ -38,20 +38,20 @@
 
             // シーンを作成
             const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xFFFFFF);
+            scene.background = new THREE.Color(0x87B8C0);
 
             // 環境光源を作成
-            const ambientLight = new THREE.AmbientLight(0xffffff, 2);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1);
             scene.add(ambientLight);
 
             // 平行光源を作成
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-            directionalLight.position.set(0, 3, 6);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(10, 10, 10);
             scene.add(directionalLight);
 
             // カメラを作成
             const camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
-            camera.position.set(0, 0, 2000);
+            camera.position.set(0, 2, 8);
 
             // リサイズ対応
             window.addEventListener('resize', () => {
@@ -67,31 +67,57 @@
             controls.enableDamping = true;
             controls.dampingFactor = 0.2;
 
-            // 3Dモデルの読み込み
+            // GLTFLoaderを使ってモデルをロード
             const loader = new THREE.GLTFLoader();
+            let mixer = null; // アニメーションを管理するためのmixer
+            let action = null; // 再生・停止に使うアニメーションアクション
+
             loader.load(
-                'assets/character_motion.glb',
+                'assets/character_motion.glb', // モデルのパス
                 (glb) => {
                     const model = glb.scene;
-                    model.scale.set(80.0, 80.0, 80.0);
-                    model.position.set(0, -900, 0);
+                    model.scale.set(1, 1, 1);
+                    model.position.set(0, -1, 0);
                     scene.add(model);
+
+                    // アニメーションを管理するmixerを初期化
+                    mixer = new THREE.AnimationMixer(model);
+
+                    // モデルに含まれるアニメーションを取得
+                    const animations = glb.animations;
+                    if (animations.length > 0) {
+                        // 最初のアニメーションを選択
+                        action = mixer.clipAction(animations[0]);
+                    }
                 },
                 undefined,
-                (error) => console.error(error)
+                (error) => {
+                    console.error('モデルの読み込みに失敗しました', error);
+                }
             );
 
-            // カメラの位置をクリックで変更するイベントを追加
+            // クリックイベントでアニメーションを再生または停止
             window.addEventListener('click', () => {
-                camera.position.z += 2000; // Z軸方向に +10000 移動
-                console.log(`カメラ位置: (${camera.position.x}, ${camera.position.y}, ${camera.position.z})`);
+                if (mixer && action) {
+                    if (action.isRunning()) {
+                        // アニメーション停止
+                        action.stop();
+                    } else {
+                        // アニメーション再生
+                        action.play();
+                    }
+                }
             });
 
-            // リアルタイムレンダリング
+            // レンダリングとアニメーション更新
+            const clock = new THREE.Clock(); // 時間管理用
+
             function tick() {
-                controls.update();
-                renderer.render(scene, camera);
-                requestAnimationFrame(tick);
+                const delta = clock.getDelta(); // フレーム間の経過時間
+                if (mixer) mixer.update(delta); // アニメーション更新
+                controls.update(); // コントロール更新
+                renderer.render(scene, camera); // シーン描画
+                requestAnimationFrame(tick); // 次フレームをリクエスト
             }
             tick();
         }
