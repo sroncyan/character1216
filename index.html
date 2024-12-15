@@ -1,9 +1,11 @@
+
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Animation</title>
+    <title>Three.js 3D Model</title>
     <style>
         body {
             margin: 0;
@@ -20,104 +22,80 @@
     <script src="https://unpkg.com/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://unpkg.com/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
     <script>
+        //https://coosy.co.jp/blog/3dmodel-threejs/ を参考
         window.addEventListener("DOMContentLoaded", init);
-
         function init() {
-            // レンダラーの初期化
+            // レンダラーを作成
             const canvasElement = document.querySelector('#myCanvas');
             const renderer = new THREE.WebGLRenderer({
                 antialias: true,
                 canvas: canvasElement,
             });
-            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // ウィンドウサイズに合わせる
+            const width = window.innerWidth;
+            const height = window.innerHeight;
             renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(width, height);
 
-            // シーンの作成
+            // シーンを作成
             const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xffffff);
+            scene.background = new THREE.Color(0xFFFFFF);
 
-            // 照明の追加
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+            // 環境光源を作成
+            const ambientLight = new THREE.AmbientLight(0xffffff, 2);
             scene.add(ambientLight);
 
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            directionalLight.position.set(10, 10, 10);
+            // 平行光源を作成
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+            directionalLight.position.set(0, 3, 6);
             scene.add(directionalLight);
 
-            // カメラの作成
-            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(0, 1, 5);
-            scene.add(camera);
+            // カメラを作成
+            const camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+            camera.position.set(0, 0, 2000);
 
-            // カメラ操作を有効化
+            // リサイズ対応
+            window.addEventListener('resize', () => {
+                const newWidth = window.innerWidth;
+                const newHeight = window.innerHeight;
+                renderer.setSize(newWidth, newHeight);
+                camera.aspect = newWidth / newHeight;
+                camera.updateProjectionMatrix();
+            });
+
+            // カメラコントローラーを作成
             const controls = new THREE.OrbitControls(camera, canvasElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.2;
 
-            // ウィンドウのリサイズに対応
-            window.addEventListener('resize', () => {
-                const width = window.innerWidth;
-                const height = window.innerHeight;
-                renderer.setSize(width, height);
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
-            });
-
-            // 3Dモデルとアニメーションをロード
+            // 3Dモデルの読み込み
             const loader = new THREE.GLTFLoader();
-            let mixer = null; // アニメーションの管理
-            let action = null;
-
             loader.load(
-                'assets/character.glb', // アニメーション付きGLBファイル
+                'assets/character.glb',
                 (glb) => {
                     const model = glb.scene;
-                    model.scale.set(1, 1, 1);
-                    model.position.set(0, -1, 0);
+                    model.scale.set(80.0, 80.0, 80.0);
+                    model.position.set(0, -900, 0);
                     scene.add(model);
-
-                    // アニメーションを管理するAnimationMixerを作成
-                    mixer = new THREE.AnimationMixer(model);
-                    const animations = glb.animations;
-
-                    if (animations.length > 0) {
-                        // 最初のアニメーションを選択し、停止状態にする
-                        action = mixer.clipAction(animations[0]);
-                        action.setLoop(THREE.LoopRepeat); // 繰り返し再生可能に設定
-                        action.stop();
-                    } else {
-                        console.error('GLB内にアニメーションが含まれていません。');
-                    }
                 },
                 undefined,
-                (error) => {
-                    console.error('モデルのロード中にエラーが発生しました:', error);
-                }
+                (error) => console.error(error)
             );
 
-            // クリックでアニメーション再生・停止を切り替え
+            // カメラの位置をクリックで変更するイベントを追加
             window.addEventListener('click', () => {
-                if (action) {
-                    if (action.isRunning()) {
-                        action.stop();
-                    } else {
-                        action.play();
-                    }
-                }
+                camera.position.z += 2000; // Z軸方向に +10000 移動
+                console.log(`カメラ位置: (${camera.position.x}, ${camera.position.y}, ${camera.position.z})`);
             });
 
-            // アニメーションと描画を更新
-            const clock = new THREE.Clock();
-
-            function animate() {
-                const delta = clock.getDelta();
-                if (mixer) mixer.update(delta); // アニメーション更新
-                controls.update(); // カメラコントロール更新
-                renderer.render(scene, camera); // 描画
-                requestAnimationFrame(animate);
+            // リアルタイムレンダリング
+            function tick() {
+                controls.update();
+                renderer.render(scene, camera);
+                requestAnimationFrame(tick);
             }
-
-            animate();
+            tick();
         }
     </script>
 </body>
