@@ -46,13 +46,8 @@
 
             // カメラの作成
             const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(0, 20,50);
+            camera.position.set(0, 10,50);
             scene.add(camera);
-
-            // カメラ操作を有効化
-            const controls = new THREE.OrbitControls(camera, canvasElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.2;
 
             // ウィンドウのリサイズに対応
             window.addEventListener('resize', () => {
@@ -112,7 +107,6 @@
             function animate() {
                 const delta = clock.getDelta();
                 if (mixer) mixer.update(delta); // アニメーション更新
-                controls.update(); // カメラコントロール更新
                 renderer.render(scene, camera); // 描画
                 requestAnimationFrame(animate);
             }
